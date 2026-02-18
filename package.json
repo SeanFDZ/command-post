@@ -6,7 +6,7 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/command-post/command-post.git"
+    "url": "https://github.com/SeanFDZ/command-post.git"
   },
   "engines": {
     "node": ">=22.0.0"
