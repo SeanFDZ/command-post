@@ -1,0 +1,236 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Command Post Configuration Schema",
+  "description": "Schema for .command-post/config.yaml (validated as JSON after YAML parsing). Defines orchestration, communication, and agent configuration for Command Post projects.",
+  "type": "object",
+  "required": [
+    "project",
+    "orchestration",
+    "agents",
+    "communication",
+    "paths"
+  ],
+  "properties": {
+    "project": {
+      "type": "object",
+      "title": "Project Information",
+      "description": "Basic project metadata",
+      "required": ["name", "version"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "Project Name",
+          "description": "Human-readable project name"
+        },
+        "version": {
+          "type": "string",
+          "title": "Project Version",
+          "description": "Semantic version string (e.g., 1.0.0)",
+          "pattern": "^\\d+\\.\\d+\\.\\d+.*$"
+        }
+      }
+    },
+    "orchestration": {
+      "type": "object",
+      "title": "Orchestration Configuration",
+      "description": "Hierarchy and agent coordination settings",
+      "required": ["hierarchy", "domains"],
+      "properties": {
+        "hierarchy": {
+          "type": "string",
+          "title": "Organizational Hierarchy",
+          "description": "Type of hierarchy for agent coordination",
+          "enum": ["pm-po-agent", "po-agent", "flat"]
+        },
+        "domains": {
+          "type": "array",
+          "title": "Domains",
+          "description": "List of domain/component areas managed by this project",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "max_agents_per_domain": {
+          "type": "integer",
+          "title": "Max Agents Per Domain",
+          "description": "Maximum number of worker agents allowed per domain",
+          "minimum": 1
+        }
+      }
+    },
+    "agents": {
+      "type": "object",
+      "title": "Agent Configuration",
+      "description": "Settings for various agent types and their behaviors",
+      "properties": {
+        "context_monitor": {
+          "type": "object",
+          "title": "Context Monitor Settings",
+          "description": "Configuration for context lifecycle management",
+          "properties": {
+            "threshold": {
+              "type": "number",
+              "title": "Context Usage Threshold",
+              "description": "Trigger memory snapshot when context usage exceeds this (0-1)",
+              "minimum": 0,
+              "maximum": 1,
+              "default": 0.8
+            },
+            "poll_interval": {
+              "type": "integer",
+              "title": "Poll Interval",
+              "description": "How often to check context usage in seconds",
+              "minimum": 1,
+              "default": 60
+            }
+          }
+        },
+        "audit": {
+          "type": "object",
+          "title": "Audit Agent Settings",
+          "description": "Configuration for compliance auditing",
+          "properties": {
+            "run_on": {
+              "type": "string",
+              "title": "Audit Trigger",
+              "description": "When to run audits",
+              "enum": ["ready_for_review", "scheduled", "manual"],
+              "default": "ready_for_review"
+            },
+            "compliance_threshold": {
+              "type": "number",
+              "title": "Compliance Threshold",
+              "description": "Minimum compliance score required for approval (0-1)",
+              "minimum": 0,
+              "maximum": 1,
+              "default": 0.9
+            },
+            "cross_domain": {
+              "type": "boolean",
+              "title": "Cross-Domain Auditing",
+              "description": "Whether audit agent can audit across multiple domains",
+              "default": true
+            }
+          }
+        },
+        "workers": {
+          "type": "object",
+          "title": "Worker Agent Settings",
+          "description": "Configuration for worker agent behavior",
+          "properties": {
+            "lateral_messaging": {
+              "type": "boolean",
+              "title": "Lateral Messaging Enabled",
+              "description": "Whether workers can send peer-to-peer messages",
+              "default": true
+            },
+            "cc_orchestrator": {
+              "type": "boolean",
+              "title": "CC Orchestrator",
+              "description": "Whether to CC orchestrator on lateral messages",
+              "default": false
+            }
+          }
+        }
+      }
+    },
+    "communication": {
+      "type": "object",
+      "title": "Communication Configuration",
+      "description": "Message and task format specifications",
+      "required": ["inbox_format", "task_format", "contracts_directory"],
+      "properties": {
+        "inbox_format": {
+          "type": "string",
+          "title": "Inbox Format",
+          "description": "Message format for agent inboxes",
+          "enum": ["json"],
+          "default": "json"
+        },
+        "task_format": {
+          "type": "string",
+          "title": "Task Format",
+          "description": "Format for task object storage",
+          "enum": ["json"],
+          "default": "json"
+        },
+        "contracts_directory": {
+          "type": "string",
+          "title": "Contracts Directory",
+          "description": "Path to shared contract schemas",
+          "default": ".command-post/contracts"
+        }
+      }
+    },
+    "human_gates": {
+      "type": "object",
+      "title": "Human Approval Gates",
+      "description": "Configuration for tasks requiring human approval",
+      "properties": {
+        "require_approval": {
+          "type": "array",
+          "title": "Gates Requiring Approval",
+          "description": "List of gate types that require human approval",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "notification": {
+          "type": "object",
+          "title": "Notification Settings",
+          "description": "How to notify humans of approval requests",
+          "properties": {
+            "slack_webhook": {
+              "type": ["string", "null"],
+              "title": "Slack Webhook URL",
+              "description": "Optional Slack webhook for notifications",
+              "format": "uri"
+            }
+          }
+        }
+      }
+    },
+    "git": {
+      "type": "object",
+      "title": "Git Configuration",
+      "description": "Version control settings for task outputs",
+      "properties": {
+        "auto_commit": {
+          "type": "boolean",
+          "title": "Auto Commit",
+          "description": "Automatically commit task changes to git",
+          "default": true
+        },
+        "branch_strategy": {
+          "type": "string",
+          "title": "Branch Strategy",
+          "description": "Strategy for organizing work across branches",
+          "enum": ["per-domain", "per-agent", "trunk"],
+          "default": "per-domain"
+        },
+        "push_remote": {
+          "type": "boolean",
+          "title": "Push to Remote",
+          "description": "Push commits to remote repository",
+          "default": true
+        }
+      }
+    },
+    "paths": {
+      "type": "object",
+      "title": "Path Configuration",
+      "description": "Directory paths for Command Post artifacts",
+      "required": ["output_dir"],
+      "properties": {
+        "output_dir": {
+          "type": "string",
+          "title": "Output Directory",
+          "description": "Root directory for task outputs and artifacts",
+          "default": "./output"
+        }
+      }
+    }
+  }
+}

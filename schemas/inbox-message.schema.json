@@ -1,0 +1,464 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Inbox Message Schema",
+  "description": "Schema for inbox messages exchanged between Command Post agents. Each agent maintains an inbox at .command-post/messages/<agent-id>.json with a messages array.",
+  "type": "object",
+  "definitions": {
+    "message": {
+      "type": "object",
+      "title": "Message",
+      "description": "A single message in an agent's inbox",
+      "required": ["id", "from", "to", "timestamp", "type", "priority", "body"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "Message ID",
+          "description": "Unique message identifier",
+          "pattern": "^msg-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "from": {
+          "type": "string",
+          "title": "From Agent ID",
+          "description": "Sender agent ID or system identifier"
+        },
+        "to": {
+          "type": "string",
+          "title": "To Agent ID",
+          "description": "Recipient agent ID"
+        },
+        "timestamp": {
+          "type": "string",
+          "title": "Timestamp",
+          "description": "Message creation time in ISO 8601 format",
+          "format": "date-time"
+        },
+        "type": {
+          "type": "string",
+          "title": "Message Type",
+          "description": "Categorizes the message purpose and body structure",
+          "enum": [
+            "task_assignment",
+            "task_update",
+            "audit_report",
+            "feedback",
+            "peer_message",
+            "lifecycle_command",
+            "memory_handoff",
+            "escalation",
+            "human_approval_request",
+            "human_approval_response"
+          ]
+        },
+        "priority": {
+          "type": "string",
+          "title": "Priority Level",
+          "description": "Message priority affecting processing order",
+          "enum": ["low", "normal", "high", "critical"]
+        },
+        "body": {
+          "title": "Message Body",
+          "description": "Type-specific message content",
+          "oneOf": [
+            { "$ref": "#/definitions/taskAssignmentBody" },
+            { "$ref": "#/definitions/taskUpdateBody" },
+            { "$ref": "#/definitions/auditReportBody" },
+            { "$ref": "#/definitions/feedbackBody" },
+            { "$ref": "#/definitions/peerMessageBody" },
+            { "$ref": "#/definitions/lifecycleCommandBody" },
+            { "$ref": "#/definitions/memoryHandoffBody" },
+            { "$ref": "#/definitions/escalationBody" },
+            { "$ref": "#/definitions/humanApprovalRequestBody" },
+            { "$ref": "#/definitions/humanApprovalResponseBody" }
+          ]
+        },
+        "read": {
+          "type": "boolean",
+          "title": "Read Status",
+          "description": "Whether the message has been read by recipient",
+          "default": false
+        },
+        "cc": {
+          "type": "array",
+          "title": "Carbon Copy Recipients",
+          "description": "Optional list of agent IDs to CC (typically orchestrator)",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "taskAssignmentBody": {
+      "type": "object",
+      "title": "Task Assignment Body",
+      "description": "Body structure for task_assignment message type",
+      "required": ["task_id", "instruction", "prd_sections"],
+      "properties": {
+        "task_id": {
+          "type": "string",
+          "title": "Task ID",
+          "description": "Reference to task object",
+          "pattern": "^task-\\d+$"
+        },
+        "instruction": {
+          "type": "string",
+          "title": "Instruction",
+          "description": "Detailed instruction for task execution"
+        },
+        "prd_sections": {
+          "type": "array",
+          "title": "PRD Sections",
+          "description": "References to relevant PRD sections",
+          "items": {
+            "type": "string"
+          }
+        },
+        "constraints": {
+          "type": "array",
+          "title": "Constraints",
+          "description": "Task execution constraints and limitations",
+          "items": {
+            "type": "string"
+          }
+        },
+        "dependencies": {
+          "type": "array",
+          "title": "Dependencies",
+          "description": "Task IDs that must be completed first",
+          "items": {
+            "type": "string",
+            "pattern": "^task-\\d+$"
+          }
+        }
+      }
+    },
+    "taskUpdateBody": {
+      "type": "object",
+      "title": "Task Update Body",
+      "description": "Body structure for task_update message type",
+      "required": ["task_id", "status", "summary"],
+      "properties": {
+        "task_id": {
+          "type": "string",
+          "title": "Task ID",
+          "pattern": "^task-\\d+$"
+        },
+        "status": {
+          "type": "string",
+          "title": "Task Status",
+          "enum": ["pending", "assigned", "in_progress", "blocked", "ready_for_review", "in_review", "needs_revision", "approved", "failed"]
+        },
+        "summary": {
+          "type": "string",
+          "title": "Status Summary",
+          "description": "Human-readable update summary"
+        },
+        "files_modified": {
+          "type": "array",
+          "title": "Files Modified",
+          "description": "List of file paths modified in this update",
+          "items": {
+            "type": "string"
+          }
+        },
+        "next_steps": {
+          "type": "array",
+          "title": "Next Steps",
+          "description": "Planned next steps",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "auditReportBody": {
+      "type": "object",
+      "title": "Audit Report Body",
+      "description": "Body structure for audit_report message type",
+      "required": ["task_id", "agent", "compliance_score"],
+      "properties": {
+        "task_id": {
+          "type": "string",
+          "title": "Task ID",
+          "pattern": "^task-\\d+$"
+        },
+        "agent": {
+          "type": "string",
+          "title": "Auditing Agent ID"
+        },
+        "compliance_score": {
+          "type": "number",
+          "title": "Compliance Score",
+          "description": "Overall compliance rating from 0 (non-compliant) to 1 (fully compliant)",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "findings": {
+          "type": "array",
+          "title": "Audit Findings",
+          "items": {
+            "type": "object",
+            "required": ["severity", "prd_section", "expected", "actual"],
+            "properties": {
+              "severity": {
+                "type": "string",
+                "enum": ["info", "warning", "critical"]
+              },
+              "prd_section": {
+                "type": "string",
+                "description": "PRD section identifier"
+              },
+              "expected": {
+                "type": "string",
+                "description": "Expected behavior per PRD"
+              },
+              "actual": {
+                "type": "string",
+                "description": "Actual behavior observed"
+              },
+              "recommendation": {
+                "type": "string",
+                "description": "Recommended corrective action"
+              }
+            }
+          }
+        }
+      }
+    },
+    "feedbackBody": {
+      "type": "object",
+      "title": "Feedback Body",
+      "description": "Body structure for feedback message type",
+      "required": ["task_id", "action"],
+      "properties": {
+        "task_id": {
+          "type": "string",
+          "title": "Task ID",
+          "pattern": "^task-\\d+$"
+        },
+        "action": {
+          "type": "string",
+          "title": "Feedback Action",
+          "description": "Action requested on the task",
+          "enum": ["approve", "revise", "reassign"]
+        },
+        "comments": {
+          "type": "string",
+          "title": "Comments",
+          "description": "Detailed feedback comments"
+        },
+        "revision_items": {
+          "type": "array",
+          "title": "Revision Items",
+          "description": "Specific items requiring revision (if action is revise)",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "peerMessageBody": {
+      "type": "object",
+      "title": "Peer Message Body",
+      "description": "Body structure for peer_message message type (agent-to-agent communication)",
+      "required": ["topic", "content"],
+      "properties": {
+        "topic": {
+          "type": "string",
+          "title": "Topic",
+          "description": "Message topic/subject"
+        },
+        "content": {
+          "type": "string",
+          "title": "Content",
+          "description": "Message content"
+        },
+        "related_tasks": {
+          "type": "array",
+          "title": "Related Tasks",
+          "description": "Task IDs related to this message",
+          "items": {
+            "type": "string",
+            "pattern": "^task-\\d+$"
+          }
+        },
+        "proposed_contract_change": {
+          "type": "object",
+          "title": "Proposed Contract Change",
+          "description": "Optional proposal to modify a shared contract",
+          "properties": {
+            "contract_file": {
+              "type": "string"
+            },
+            "change_description": {
+              "type": "string"
+            },
+            "rationale": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "lifecycleCommandBody": {
+      "type": "object",
+      "title": "Lifecycle Command Body",
+      "description": "Body structure for lifecycle_command message type (context management)",
+      "required": ["command", "reason"],
+      "properties": {
+        "command": {
+          "type": "string",
+          "title": "Lifecycle Command",
+          "description": "Command to execute",
+          "enum": ["write_memory_snapshot", "prepare_shutdown", "status_check", "reduce_task_complexity", "compress_history", "offload_context"]
+        },
+        "reason": {
+          "type": "string",
+          "title": "Reason",
+          "description": "Reason for issuing command"
+        },
+        "current_usage": {
+          "type": "number",
+          "title": "Current Context Usage",
+          "description": "Current context usage percentage (0-1)",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "deadline": {
+          "type": "string",
+          "title": "Deadline",
+          "description": "Deadline for command completion if time-sensitive",
+          "format": "date-time"
+        }
+      }
+    },
+    "memoryHandoffBody": {
+      "type": "object",
+      "title": "Memory Handoff Body",
+      "description": "Body structure for memory_handoff message type",
+      "required": ["snapshot_location", "handoff_number", "task_id"],
+      "properties": {
+        "snapshot_location": {
+          "type": "string",
+          "title": "Snapshot Location",
+          "description": "File path to memory snapshot"
+        },
+        "handoff_number": {
+          "type": "integer",
+          "title": "Handoff Number",
+          "description": "Sequential handoff counter"
+        },
+        "task_id": {
+          "type": "string",
+          "title": "Task ID",
+          "pattern": "^task-\\d+$"
+        }
+      }
+    },
+    "escalationBody": {
+      "type": "object",
+      "title": "Escalation Body",
+      "description": "Body structure for escalation message type",
+      "required": ["task_id", "issue", "severity"],
+      "properties": {
+        "task_id": {
+          "type": "string",
+          "title": "Task ID",
+          "pattern": "^task-\\d+$"
+        },
+        "issue": {
+          "type": "string",
+          "title": "Issue Description",
+          "description": "Description of the issue requiring escalation"
+        },
+        "severity": {
+          "type": "string",
+          "title": "Severity Level",
+          "enum": ["low", "medium", "high", "critical"]
+        },
+        "recommended_action": {
+          "type": "string",
+          "title": "Recommended Action",
+          "description": "Suggested corrective action"
+        }
+      }
+    },
+    "humanApprovalRequestBody": {
+      "type": "object",
+      "title": "Human Approval Request Body",
+      "description": "Body structure for human_approval_request message type (gates requiring human decision)",
+      "required": ["gate_type", "description", "context"],
+      "properties": {
+        "gate_type": {
+          "type": "string",
+          "title": "Gate Type",
+          "description": "Type of gate requiring approval"
+        },
+        "description": {
+          "type": "string",
+          "title": "Description",
+          "description": "Human-readable description of approval needed"
+        },
+        "context": {
+          "type": "object",
+          "title": "Context",
+          "description": "Contextual information for decision-making"
+        },
+        "options": {
+          "type": "array",
+          "title": "Options",
+          "description": "Available decision options",
+          "items": {
+            "type": "object",
+            "required": ["value"],
+            "properties": {
+              "value": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "humanApprovalResponseBody": {
+      "type": "object",
+      "title": "Human Approval Response Body",
+      "description": "Body structure for human_approval_response message type",
+      "required": ["approval_id", "decision"],
+      "properties": {
+        "approval_id": {
+          "type": "string",
+          "title": "Approval ID",
+          "description": "ID of the approval request being responded to"
+        },
+        "decision": {
+          "type": "string",
+          "title": "Decision",
+          "description": "Human decision",
+          "enum": ["approved", "rejected"]
+        },
+        "comment": {
+          "type": "string",
+          "title": "Comment",
+          "description": "Optional comment on decision"
+        }
+      }
+    }
+  },
+  "required": ["messages"],
+  "properties": {
+    "messages": {
+      "type": "array",
+      "title": "Messages Array",
+      "description": "Array of messages in this inbox",
+      "items": {
+        "$ref": "#/definitions/message"
+      }
+    }
+  }
+}

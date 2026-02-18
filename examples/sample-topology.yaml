@@ -1,0 +1,41 @@
+# Example Command Post topology for a small web app project
+# Hierarchy: PO manages workers and audit agents directly
+
+hierarchy: po-agent
+
+agents:
+  - id: orchestrator-1
+    role: orchestrator
+    domain: project-management
+
+  - id: worker-frontend-1
+    role: worker
+    domain: frontend
+
+  - id: worker-backend-1
+    role: worker
+    domain: backend
+
+  - id: worker-database-1
+    role: worker
+    domain: database
+
+  - id: auditor-frontend-1
+    role: audit
+    domain: frontend
+
+  - id: auditor-backend-1
+    role: audit
+    domain: backend
+
+settings:
+  max_agents: 8
+  max_per_domain: 3
+  human_gates:
+    - task_approval
+    - final_review
+  audit_approval_threshold: 0.7
+  context_monitoring:
+    warning_threshold: 0.60
+    critical_threshold: 0.70
+    poll_interval_ms: 30000

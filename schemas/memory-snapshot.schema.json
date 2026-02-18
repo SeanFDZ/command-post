@@ -1,0 +1,189 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Memory Snapshot Schema",
+  "description": "Schema for memory snapshots stored at .command-post/memory/<agent-id>-handoff-<number>.json. Captures agent state when context usage exceeds threshold.",
+  "type": "object",
+  "required": [
+    "agent_id",
+    "task_id",
+    "snapshot_timestamp",
+    "handoff_number",
+    "context_at_snapshot",
+    "state",
+    "next_steps",
+    "quality_check"
+  ],
+  "properties": {
+    "agent_id": {
+      "type": "string",
+      "title": "Agent ID",
+      "description": "ID of the agent creating this snapshot"
+    },
+    "task_id": {
+      "type": "string",
+      "title": "Task ID",
+      "description": "ID of the task being worked on",
+      "pattern": "^task-\\d+$"
+    },
+    "snapshot_timestamp": {
+      "type": "string",
+      "title": "Snapshot Timestamp",
+      "description": "When the snapshot was created in ISO 8601 format",
+      "format": "date-time"
+    },
+    "handoff_number": {
+      "type": "integer",
+      "title": "Handoff Number",
+      "description": "Sequential counter for this agent's handoffs (>= 1)",
+      "minimum": 1
+    },
+    "context_at_snapshot": {
+      "type": "number",
+      "title": "Context Usage at Snapshot",
+      "description": "Percentage of context window used when snapshot was created (0-1)",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "state": {
+      "type": "object",
+      "title": "Current State",
+      "description": "Snapshot of current task execution state",
+      "required": ["current_step", "progress_summary"],
+      "properties": {
+        "current_step": {
+          "type": "string",
+          "title": "Current Step",
+          "description": "Description of the step currently being executed"
+        },
+        "progress_summary": {
+          "type": "string",
+          "title": "Progress Summary",
+          "description": "High-level summary of work completed so far"
+        },
+        "completion_estimate": {
+          "type": "string",
+          "title": "Completion Estimate",
+          "description": "Estimated time or step count to completion"
+        }
+      }
+    },
+    "decisions": {
+      "type": "array",
+      "title": "Key Decisions Made",
+      "description": "Major decisions made during task execution up to this point",
+      "items": {
+        "type": "object",
+        "title": "Decision Record",
+        "required": ["decision", "rationale"],
+        "properties": {
+          "decision": {
+            "type": "string",
+            "title": "Decision",
+            "description": "The decision that was made"
+          },
+          "rationale": {
+            "type": "string",
+            "title": "Rationale",
+            "description": "Why this decision was made"
+          },
+          "impact": {
+            "type": "string",
+            "title": "Impact",
+            "description": "How this decision impacts remaining work"
+          }
+        }
+      }
+    },
+    "gotchas": {
+      "type": "array",
+      "title": "Gotchas and Issues",
+      "description": "Unexpected issues, workarounds, or edge cases discovered",
+      "items": {
+        "type": "string"
+      }
+    },
+    "files_state": {
+      "type": "object",
+      "title": "Files State",
+      "description": "Status of files involved in this task",
+      "required": ["completed", "in_progress", "not_started"],
+      "properties": {
+        "completed": {
+          "type": "array",
+          "title": "Completed Files",
+          "description": "Files that are complete",
+          "items": {
+            "type": "string"
+          }
+        },
+        "in_progress": {
+          "type": "array",
+          "title": "In-Progress Files",
+          "description": "Files currently being worked on",
+          "items": {
+            "type": "string"
+          }
+        },
+        "not_started": {
+          "type": "array",
+          "title": "Not-Started Files",
+          "description": "Files that haven't been started yet",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "next_steps": {
+      "type": "array",
+      "title": "Next Steps",
+      "description": "Specific steps for the next agent to take (must have at least 1)",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "dependencies_discovered": {
+      "type": "array",
+      "title": "Dependencies Discovered",
+      "description": "Task dependencies discovered during execution",
+      "items": {
+        "type": "string",
+        "pattern": "^task-\\d+$"
+      }
+    },
+    "quality_check": {
+      "type": "object",
+      "title": "Quality Assurance Checks",
+      "description": "Self-checks that snapshot quality meets requirements",
+      "required": [
+        "references_all_modified_files",
+        "mentions_current_step",
+        "has_next_steps",
+        "carries_forward_decisions"
+      ],
+      "properties": {
+        "references_all_modified_files": {
+          "type": "boolean",
+          "title": "References All Modified Files",
+          "description": "Whether snapshot lists all modified files"
+        },
+        "mentions_current_step": {
+          "type": "boolean",
+          "title": "Mentions Current Step",
+          "description": "Whether current step is clearly described"
+        },
+        "has_next_steps": {
+          "type": "boolean",
+          "title": "Has Next Steps",
+          "description": "Whether concrete next steps are provided"
+        },
+        "carries_forward_decisions": {
+          "type": "boolean",
+          "title": "Carries Forward Decisions",
+          "description": "Whether key decisions are documented for handoff"
+        }
+      }
+    }
+  }
+}

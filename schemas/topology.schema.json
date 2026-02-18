@@ -1,0 +1,135 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Project Topology Schema",
+  "description": "Schema for .command-post/topology.yaml (validated as JSON after YAML parsing). Defines the structure of agents, their roles, and domain assignments.",
+  "type": "object",
+  "required": [
+    "project_name",
+    "hierarchy",
+    "generated_at",
+    "domains",
+    "total_agents"
+  ],
+  "properties": {
+    "project_name": {
+      "type": "string",
+      "title": "Project Name",
+      "description": "Name of the project"
+    },
+    "hierarchy": {
+      "type": "string",
+      "title": "Organizational Hierarchy",
+      "description": "Type of hierarchy used in this project",
+      "enum": ["pm-po-agent", "po-agent", "flat"]
+    },
+    "generated_at": {
+      "type": "string",
+      "title": "Generated At",
+      "description": "Timestamp when topology was generated in ISO 8601 format",
+      "format": "date-time"
+    },
+    "domains": {
+      "type": "array",
+      "title": "Domains",
+      "description": "List of domains and their agent assignments",
+      "items": {
+        "type": "object",
+        "title": "Domain",
+        "required": ["name", "complexity", "feature_count", "agents"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Domain Name",
+            "description": "Name of the domain/component area"
+          },
+          "complexity": {
+            "type": "string",
+            "title": "Domain Complexity",
+            "description": "Estimated complexity level of this domain",
+            "enum": ["low", "medium", "high"]
+          },
+          "feature_count": {
+            "type": "integer",
+            "title": "Feature Count",
+            "description": "Number of user stories/features in this domain",
+            "minimum": 0
+          },
+          "agents": {
+            "type": "array",
+            "title": "Assigned Agents",
+            "description": "Agents working in this domain",
+            "items": {
+              "type": "object",
+              "title": "Agent Assignment",
+              "required": ["id", "role"],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "title": "Agent ID",
+                  "description": "Unique identifier for this agent"
+                },
+                "role": {
+                  "type": "string",
+                  "title": "Agent Role",
+                  "description": "Functional role of this agent",
+                  "enum": [
+                    "orchestrator",
+                    "po",
+                    "audit",
+                    "worker",
+                    "context-monitor"
+                  ]
+                },
+                "domain": {
+                  "oneOf": [
+                    {
+                      "type": "string",
+                      "title": "Domain Name",
+                      "description": "Domain this agent is assigned to"
+                    },
+                    {
+                      "type": "null",
+                      "description": "Null for cross-domain roles"
+                    }
+                  ]
+                },
+                "assigned_features": {
+                  "type": "array",
+                  "title": "Assigned Features",
+                  "description": "Specific features assigned to this agent",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "model_preference": {
+                  "type": ["string", "null"],
+                  "title": "Model Preference",
+                  "description": "Optional preferred model for this agent (e.g., claude-opus-4-6)"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "total_agents": {
+      "type": "integer",
+      "title": "Total Agent Count",
+      "description": "Total number of agents in topology",
+      "minimum": 0
+    },
+    "estimated_token_budget": {
+      "oneOf": [
+        {
+          "type": "integer",
+          "title": "Token Budget",
+          "description": "Estimated total tokens required for all agents",
+          "minimum": 0
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}

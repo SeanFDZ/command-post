@@ -1,0 +1,397 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Task Object Schema",
+  "description": "Schema for task objects stored at .command-post/tasks/<task-id>.json. Represents a unit of work assigned within Command Post.",
+  "type": "object",
+  "required": [
+    "id",
+    "title",
+    "feature",
+    "domain",
+    "assigned_to",
+    "assigned_by",
+    "status",
+    "prd_sections",
+    "plan",
+    "progress",
+    "dependencies",
+    "audit",
+    "context",
+    "timestamps"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "Task ID",
+      "description": "Unique task identifier",
+      "pattern": "^task-\\d+$"
+    },
+    "title": {
+      "type": "string",
+      "title": "Task Title",
+      "description": "Human-readable task title"
+    },
+    "feature": {
+      "type": "string",
+      "title": "Feature Reference",
+      "description": "Reference to user story or feature this task implements"
+    },
+    "domain": {
+      "type": "string",
+      "title": "Domain",
+      "description": "Domain/component area this task belongs to"
+    },
+    "assigned_to": {
+      "oneOf": [
+        {
+          "type": "string",
+          "title": "Agent ID",
+          "description": "ID of assigned worker agent"
+        },
+        {
+          "type": "null",
+          "title": "Unassigned",
+          "description": "Task not yet assigned"
+        }
+      ]
+    },
+    "assigned_by": {
+      "type": "string",
+      "title": "Assigned By",
+      "description": "ID of agent that assigned this task (typically PM or PO)"
+    },
+    "status": {
+      "type": "string",
+      "title": "Task Status",
+      "description": "Current task execution state",
+      "enum": [
+        "pending",
+        "assigned",
+        "ready",
+        "in_progress",
+        "blocked",
+        "ready_for_review",
+        "in_review",
+        "needs_revision",
+        "approved",
+        "completed",
+        "failed",
+        "error"
+      ]
+    },
+    "prd_sections": {
+      "type": "array",
+      "title": "PRD Sections",
+      "description": "References to relevant sections in product requirements document",
+      "items": {
+        "type": "string"
+      }
+    },
+    "plan": {
+      "type": "object",
+      "title": "Task Plan",
+      "description": "Execution plan breakdown and progress tracking",
+      "required": ["steps", "current_step", "estimated_steps_remaining"],
+      "properties": {
+        "steps": {
+          "type": "array",
+          "title": "Task Steps",
+          "description": "Breakdown of task into execution steps",
+          "items": {
+            "type": "string"
+          }
+        },
+        "current_step": {
+          "type": "integer",
+          "title": "Current Step Index",
+          "description": "0-indexed position in steps array",
+          "minimum": 0
+        },
+        "estimated_steps_remaining": {
+          "type": "integer",
+          "title": "Estimated Steps Remaining",
+          "description": "Estimated number of steps left to complete",
+          "minimum": 0
+        }
+      }
+    },
+    "progress": {
+      "type": "object",
+      "title": "Progress Tracking",
+      "description": "Detailed progress and state information",
+      "required": ["summary"],
+      "properties": {
+        "summary": {
+          "type": "string",
+          "title": "Progress Summary",
+          "description": "Human-readable progress summary"
+        },
+        "files_modified": {
+          "type": "array",
+          "title": "Files Modified",
+          "description": "List of file paths modified during task execution",
+          "items": {
+            "type": "string"
+          }
+        },
+        "decisions_made": {
+          "type": "array",
+          "title": "Decisions Made",
+          "description": "Key decisions made during task execution",
+          "items": {
+            "type": "string"
+          }
+        },
+        "blockers": {
+          "type": "array",
+          "title": "Current Blockers",
+          "description": "Issues currently blocking progress",
+          "items": {
+            "type": "string"
+          }
+        },
+        "gotchas": {
+          "type": "array",
+          "title": "Gotchas and Learnings",
+          "description": "Unexpected issues and learnings for future similar tasks",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "dependencies": {
+      "type": "object",
+      "title": "Task Dependencies",
+      "description": "Tasks this task depends on and tasks that depend on it",
+      "required": ["blocked_by", "blocks"],
+      "properties": {
+        "blocked_by": {
+          "type": "array",
+          "title": "Blocked By",
+          "description": "Task IDs that must complete before this task can proceed",
+          "items": {
+            "type": "string",
+            "pattern": "^task-\\d+$"
+          }
+        },
+        "blocks": {
+          "type": "array",
+          "title": "Blocks",
+          "description": "Task IDs that cannot proceed until this task completes",
+          "items": {
+            "type": "string",
+            "pattern": "^task-\\d+$"
+          }
+        }
+      }
+    },
+    "audit": {
+      "type": "object",
+      "title": "Audit Information",
+      "description": "Compliance and audit tracking",
+      "required": ["compliance_score"],
+      "properties": {
+        "last_audit": {
+          "type": ["string", "null"],
+          "title": "Last Audit Timestamp",
+          "description": "ISO 8601 timestamp of last audit",
+          "format": "date-time"
+        },
+        "compliance_score": {
+          "type": "number",
+          "title": "Compliance Score",
+          "description": "Overall compliance rating from 0 (non-compliant) to 1 (fully compliant)",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "findings_count": {
+          "type": "integer",
+          "title": "Findings Count",
+          "description": "Total number of audit findings",
+          "minimum": 0
+        },
+        "findings_resolved": {
+          "type": "integer",
+          "title": "Findings Resolved",
+          "description": "Number of findings that have been resolved",
+          "minimum": 0
+        }
+      }
+    },
+    "context": {
+      "type": "object",
+      "title": "Context Lifecycle",
+      "description": "Tracking of context window usage and memory handoffs",
+      "required": ["usage_percent", "handoff_count"],
+      "properties": {
+        "usage_percent": {
+          "type": "number",
+          "title": "Context Usage Percentage",
+          "description": "Percentage of context window currently used (0-1)",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "handoff_count": {
+          "type": "integer",
+          "title": "Handoff Count",
+          "description": "Number of context handoffs that have occurred",
+          "minimum": 0
+        },
+        "last_memory_snapshot": {
+          "oneOf": [
+            {
+              "type": "string",
+              "title": "Snapshot Path",
+              "description": "File path to last memory snapshot"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "timestamps": {
+      "type": "object",
+      "title": "Task Timestamps",
+      "description": "Key lifecycle timestamps",
+      "required": ["created", "last_updated"],
+      "properties": {
+        "created": {
+          "type": "string",
+          "title": "Created Timestamp",
+          "description": "Task creation time in ISO 8601 format",
+          "format": "date-time"
+        },
+        "started": {
+          "oneOf": [
+            {
+              "type": "string",
+              "title": "Started Timestamp",
+              "description": "Task start time in ISO 8601 format",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "last_updated": {
+          "type": "string",
+          "title": "Last Updated Timestamp",
+          "description": "Most recent update time in ISO 8601 format",
+          "format": "date-time"
+        },
+        "completed": {
+          "oneOf": [
+            {
+              "type": "string",
+              "title": "Completed Timestamp",
+              "description": "Task completion time in ISO 8601 format",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "source": {
+      "type": "string",
+      "title": "Task Source",
+      "description": "Whether the task was generated from a PRD or created on the kanban board",
+      "enum": ["prd", "kanban"],
+      "default": "prd"
+    },
+    "refinement": {
+      "type": "object",
+      "title": "Refinement Data",
+      "description": "Refinement data for kanban-sourced tickets",
+      "required": ["status"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "title": "Refinement Status",
+          "description": "Current refinement stage",
+          "enum": ["draft", "refining", "refined"]
+        },
+        "requirements": {
+          "type": "string",
+          "title": "Requirements",
+          "description": "Detailed requirements from refinement interview"
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "title": "Acceptance Criteria",
+          "description": "List of acceptance criteria",
+          "items": { "type": "string" }
+        },
+        "technical_approach": {
+          "type": "string",
+          "title": "Technical Approach",
+          "description": "Technical approach from refinement interview"
+        },
+        "files_affected": {
+          "type": "array",
+          "title": "Files Affected",
+          "description": "List of files expected to be modified",
+          "items": { "type": "string" }
+        },
+        "risks": {
+          "type": "array",
+          "title": "Risks",
+          "description": "Identified risks from refinement",
+          "items": { "type": "string" }
+        },
+        "agent_scope": {
+          "type": "object",
+          "title": "Agent Scope",
+          "description": "Topology recommendation from refinement",
+          "required": ["workers", "auditors", "domains"],
+          "properties": {
+            "workers": {
+              "type": "integer",
+              "title": "Worker Count",
+              "minimum": 1
+            },
+            "auditors": {
+              "type": "integer",
+              "title": "Auditor Count",
+              "minimum": 1
+            },
+            "domains": {
+              "type": "array",
+              "title": "Domains",
+              "items": { "type": "string" }
+            }
+          }
+        },
+        "refined_at": {
+          "type": "string",
+          "title": "Refined At",
+          "description": "ISO 8601 timestamp when refinement completed",
+          "format": "date-time"
+        },
+        "refined_by": {
+          "type": "string",
+          "title": "Refined By",
+          "description": "Agent or user who performed the refinement"
+        }
+      }
+    },
+    "parent_ticket_id": {
+      "type": "string",
+      "title": "Parent Ticket ID",
+      "description": "ID of the parent ticket if this was split during refinement"
+    },
+    "priority": {
+      "type": "string",
+      "title": "Priority",
+      "description": "Task priority level",
+      "enum": ["low", "normal", "high", "critical"],
+      "default": "normal"
+    }
+  }
+}

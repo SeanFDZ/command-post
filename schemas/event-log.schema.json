@@ -1,0 +1,324 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Event Log Entry Schema",
+  "description": "Schema for individual entries in .command-post/history/events.jsonl (one JSON object per line). Provides audit trail of all Command Post activities.",
+  "type": "object",
+  "required": [
+    "event_id",
+    "timestamp",
+    "event_type"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "title": "Event ID",
+      "description": "Unique event identifier",
+      "format": "uuid"
+    },
+    "timestamp": {
+      "type": "string",
+      "title": "Event Timestamp",
+      "description": "When the event occurred in ISO 8601 format",
+      "format": "date-time"
+    },
+    "event_type": {
+      "type": "string",
+      "title": "Event Type",
+      "description": "Category of event",
+      "enum": [
+        "agent_spawned",
+        "agent_shutdown",
+        "task_created",
+        "task_status_changed",
+        "message_sent",
+        "audit_completed",
+        "memory_snapshot_created",
+        "handoff_completed",
+        "approval_requested",
+        "approval_resolved",
+        "error_occurred"
+      ]
+    },
+    "agent_id": {
+      "oneOf": [
+        {
+          "type": "string",
+          "title": "Agent ID",
+          "description": "ID of agent involved in this event"
+        },
+        {
+          "type": "null",
+          "description": "Null for system-level events"
+        }
+      ]
+    },
+    "data": {
+      "type": "object",
+      "title": "Event Data",
+      "description": "Type-specific event data (varies by event_type)",
+      "oneOf": [
+        {
+          "$ref": "#/definitions/agentSpawnedData"
+        },
+        {
+          "$ref": "#/definitions/agentShutdownData"
+        },
+        {
+          "$ref": "#/definitions/taskCreatedData"
+        },
+        {
+          "$ref": "#/definitions/taskStatusChangedData"
+        },
+        {
+          "$ref": "#/definitions/messageSentData"
+        },
+        {
+          "$ref": "#/definitions/auditCompletedData"
+        },
+        {
+          "$ref": "#/definitions/memorySnapshotCreatedData"
+        },
+        {
+          "$ref": "#/definitions/handoffCompletedData"
+        },
+        {
+          "$ref": "#/definitions/approvalRequestedData"
+        },
+        {
+          "$ref": "#/definitions/approvalResolvedData"
+        },
+        {
+          "$ref": "#/definitions/errorOccurredData"
+        }
+      ]
+    }
+  },
+  "definitions": {
+    "agentSpawnedData": {
+      "type": "object",
+      "title": "Agent Spawned Event Data",
+      "properties": {
+        "agent_id": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["orchestrator", "po", "worker", "audit", "context-monitor"]
+        },
+        "domain": {
+          "type": ["string", "null"]
+        },
+        "model": {
+          "type": "string"
+        }
+      }
+    },
+    "agentShutdownData": {
+      "type": "object",
+      "title": "Agent Shutdown Event Data",
+      "properties": {
+        "agent_id": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "final_context_usage": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "taskCreatedData": {
+      "type": "object",
+      "title": "Task Created Event Data",
+      "properties": {
+        "task_id": {
+          "type": "string",
+          "pattern": "^task-\\d+$"
+        },
+        "title": {
+          "type": "string"
+        },
+        "domain": {
+          "type": "string"
+        },
+        "feature": {
+          "type": "string"
+        }
+      }
+    },
+    "taskStatusChangedData": {
+      "type": "object",
+      "title": "Task Status Changed Event Data",
+      "properties": {
+        "task_id": {
+          "type": "string",
+          "pattern": "^task-\\d+$"
+        },
+        "previous_status": {
+          "type": "string"
+        },
+        "new_status": {
+          "type": "string"
+        },
+        "assigned_to": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "messageSentData": {
+      "type": "object",
+      "title": "Message Sent Event Data",
+      "properties": {
+        "message_id": {
+          "type": "string"
+        },
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "type": "string"
+        },
+        "message_type": {
+          "type": "string"
+        },
+        "priority": {
+          "type": "string"
+        }
+      }
+    },
+    "auditCompletedData": {
+      "type": "object",
+      "title": "Audit Completed Event Data",
+      "properties": {
+        "task_id": {
+          "type": "string",
+          "pattern": "^task-\\d+$"
+        },
+        "auditor_id": {
+          "type": "string"
+        },
+        "compliance_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "findings_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "result": {
+          "type": "string",
+          "enum": ["passed", "failed", "needs_revision"]
+        }
+      }
+    },
+    "memorySnapshotCreatedData": {
+      "type": "object",
+      "title": "Memory Snapshot Created Event Data",
+      "properties": {
+        "agent_id": {
+          "type": "string"
+        },
+        "task_id": {
+          "type": "string",
+          "pattern": "^task-\\d+$"
+        },
+        "handoff_number": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "context_usage": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "snapshot_file": {
+          "type": "string"
+        }
+      }
+    },
+    "handoffCompletedData": {
+      "type": "object",
+      "title": "Handoff Completed Event Data",
+      "properties": {
+        "from_agent": {
+          "type": "string"
+        },
+        "to_agent": {
+          "type": "string"
+        },
+        "task_id": {
+          "type": "string",
+          "pattern": "^task-\\d+$"
+        },
+        "handoff_number": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "snapshot_file": {
+          "type": "string"
+        }
+      }
+    },
+    "approvalRequestedData": {
+      "type": "object",
+      "title": "Approval Requested Event Data",
+      "properties": {
+        "approval_id": {
+          "type": "string"
+        },
+        "task_id": {
+          "type": "string",
+          "pattern": "^task-\\d+$"
+        },
+        "gate_type": {
+          "type": "string"
+        },
+        "requester": {
+          "type": "string"
+        }
+      }
+    },
+    "approvalResolvedData": {
+      "type": "object",
+      "title": "Approval Resolved Event Data",
+      "properties": {
+        "approval_id": {
+          "type": "string"
+        },
+        "task_id": {
+          "type": "string",
+          "pattern": "^task-\\d+$"
+        },
+        "decision": {
+          "type": "string",
+          "enum": ["approved", "rejected"]
+        },
+        "reviewer": {
+          "type": "string"
+        }
+      }
+    },
+    "errorOccurredData": {
+      "type": "object",
+      "title": "Error Occurred Event Data",
+      "properties": {
+        "error_type": {
+          "type": "string"
+        },
+        "error_message": {
+          "type": "string"
+        },
+        "task_id": {
+          "type": ["string", "null"]
+        },
+        "context": {
+          "type": "object"
+        }
+      }
+    }
+  }
+}

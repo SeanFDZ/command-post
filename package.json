@@ -1,0 +1,33 @@
+{
+  "name": "command-post",
+  "version": "0.0.0",
+  "private": true,
+  "description": "A multi-agent governance layer for AI development",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/command-post/command-post.git"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "test:watch": "pnpm -r test:watch",
+    "lint": "pnpm -r lint",
+    "clean": "pnpm -r clean",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "@types/proper-lockfile": "^4.1.4",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  },
+  "dependencies": {
+    "proper-lockfile": "^4.1.2",
+    "zod": "^4.3.6"
+  }
+}
