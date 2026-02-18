@@ -108,7 +108,7 @@ Workers (N)   Audit Agents
   (peers)
 ```
 
-Every agent is a full Claude Code instance in its own tmux session with complete tool access. No capability-limited sub-agents, no sandboxed runners. The PO can spawn additional workers or audit agents as project needs evolve.
+Every agent is a full Claude Code instance in its own tmux session with complete tool access. No nested sub-agents sharing a parent's context window, no single points of failure. Each agent owns its own full context window and can be independently monitored, replaced, and lifecycle-managed. The PO can spawn additional workers or audit agents as project needs evolve.
 
 Workers can message peer workers for cross-cutting concerns. Audit agents report only to the orchestrator. The orchestrator is the only role that can message everyone. Human approval gates are non-negotiable for architectural decisions, security choices, and integration points.
 
